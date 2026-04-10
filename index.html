@@ -18,9 +18,15 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-  const SUPABASE_URL = "https://yrkctohprrbjwokjqghi.supabase.co";
+ const SUPABASE_URL = "https://yrkctohprrbjwokjqghi.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_8r7fviSAG6ca6pye2Ji48Q_Qv2jEqWB";
-  async function addShop() {
+
+const supabase = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
+
+async function addShop() {
   console.log("clicked");
 
   const name = document.querySelector('#name').value;
@@ -33,14 +39,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_8r7fviSAG6ca6pye2Ji48Q_Qv2jEqWB";
   const { data, error } = await supabase
     .from('shops')
     .insert([
-      {
-        name: name,
-        area: area,
-        address: address,
-        phone: phone,
-        tags: tags,
-        type: type
-      }
+      { name, area, address, phone, tags, type }
     ]);
 
   if (error) {
@@ -51,11 +50,6 @@ const SUPABASE_ANON_KEY = "sb_publishable_8r7fviSAG6ca6pye2Ji48Q_Qv2jEqWB";
     console.log(data);
   }
 }
-
-const supabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
   tailwind.config = {
     darkMode: 'class',
     theme: {

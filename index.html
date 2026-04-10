@@ -18,6 +18,13 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
+  const SUPABASE_URL = "https://yrkctohprrbjwokjqghi.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_8r7fviSAG6ca6pye2Ji48Q_Qv2jEqWB";
+
+const supabase = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
   tailwind.config = {
     darkMode: 'class',
     theme: {

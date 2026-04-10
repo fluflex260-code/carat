@@ -897,11 +897,18 @@ function startRealtimeListener() {
    DELETE  (Supabase)
 ────────────────────────────────────── */
 async function deleteItem(id) {
-  if (!isAdmin) return;
-  const { error } = await _supabase.from('shops').delete().eq('id', id);
+  const { error } = await supabase
+    .from('shops')
+    .delete()
+    .eq('id', id);
+
   if (error) {
     console.error('Delete error:', error);
+    alert('Error deleting');
+  } else {
+    alert('Deleted');
   }
+}
   // Realtime listener handles UI update
 }
 

@@ -29,17 +29,17 @@ const supabase = window.supabase.createClient(
 async function addShop() {
   console.log("clicked");
 
-  const name = document.querySelector('#name').value;
-  const area = document.querySelector('#area').value;
-  const address = document.querySelector('#address').value;
-  const phone = document.querySelector('#phone').value;
-  const tags = document.querySelector('#tags').value;
-  const type = document.querySelector('#type').value;
+  const name = document.querySelector('#Name').value;
+  const area = document.querySelector('#Area').value;
+  const address = document.querySelector('#Address').value;
+  const phone = document.querySelector('#Phone').value;
+  const tags = document.querySelector('#Tags').value;
+  const type = document.querySelector('#Type').value;
 
   const { data, error } = await supabase
     .from('shops')
     .insert([
-      { name, area, address, phone, tags, type }
+      { Name, Area, Address, Phone, Tags, Type }
     ]);
 
   if (error) {

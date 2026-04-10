@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
@@ -14,42 +15,10 @@
 <!-- Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
-<!-- Supabase JS CDN -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Supabase JS CDN (UMD build – exposes window.supabase) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
 <script>
- const SUPABASE_URL = "https://yrkctohprrbjwokjqghi.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_8r7fviSAG6ca6pye2Ji48Q_Qv2jEqWB";
-
-const supabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
-
-async function addShop() {
-  console.log("clicked");
-
-  const name = document.querySelector('#Name').value;
-  const area = document.querySelector('#Area').value;
-  const address = document.querySelector('#Address').value;
-  const phone = document.querySelector('#Phone').value;
-  const tags = document.querySelector('#Tags').value;
-  const type = document.querySelector('#Type').value;
-
-  const { data, error } = await supabase
-    .from('shops')
-    .insert([
-      { Name, Area, Address, Phone, Tags, Type }
-    ]);
-
-  if (error) {
-    alert("Error: " + error.message);
-    console.log(error);
-  } else {
-    alert("Saved successfully ✅");
-    console.log(data);
-  }
-}
   tailwind.config = {
     darkMode: 'class',
     theme: {
@@ -521,11 +490,9 @@ async function addShop() {
 <script>
 /* ──────────────────────────────────────
    SUPABASE INIT
-   ⚠️  Replace with your actual project URL and anon key
-       from: https://app.supabase.com → Project Settings → API
 ────────────────────────────────────── */
-const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
-const SUPABASE_KEY = 'YOUR_ANON_PUBLIC_KEY';
+const SUPABASE_URL = 'https://yrkctohprrbjwokjqghi.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_8r7fviSAG6ca6pye2Ji48Q_Qv2jEqWB';
 const _supabase    = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 /* ──────────────────────────────────────

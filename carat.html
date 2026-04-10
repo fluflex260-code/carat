@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Carat – Search from where you are</title>
+
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+<!-- Supabase JS CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: {
+          display: ['Syne', 'Tajawal', 'sans-serif'],
+          body:    ['DM Sans', 'Tajawal', 'sans-serif'],
+        },
+        colors: {
+          brand: { 50:'#fff7ed', 100:'#ffedd5', 400:'#fb923c', 500:'#f97316', 600:'#ea580c', 700:'#c2410c' }
+        }
+      }
+    }
+  }
+</script>
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', 'Tajawal', sans-serif;
+    min-height: 100vh;
+  }
+  body[dir="rtl"] { font-family: 'Tajawal', 'DM Sans', sans-serif; }
+
+  /* ── Light ── */
+  body {
+    --bg-base:       #f1f5f9;
+    --bg-card:       rgba(255,255,255,0.72);
+    --bg-glass:      rgba(255,255,255,0.55);
+    --bg-modal:      rgba(255,255,255,0.96);
+    --border-glass:  rgba(255,255,255,0.6);
+    --border-card:   rgba(226,232,240,0.8);
+    --text-primary:  #0f172a;
+    --text-secondary:#475569;
+    --text-muted:    #94a3b8;
+    --accent:        #f97316;
+    --accent-hover:  #ea580c;
+    --accent-soft:   rgba(249,115,22,0.12);
+    --shadow-card:   0 4px 24px rgba(15,23,42,0.08);
+    --shadow-modal:  0 24px 64px rgba(15,23,42,0.18);
+    --header-bg:     rgba(255,255,255,0.75);
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+  }
+
+  /* ── Dark ── */
+  body.dark {
+    --bg-base:       #0a0f1a;
+    --bg-card:       rgba(15,23,42,0.72);
+    --bg-glass:      rgba(15,23,42,0.55);
+    --bg-modal:      rgba(10,15,26,0.97);
+    --border-glass:  rgba(255,255,255,0.08);
+    --border-card:   rgba(255,255,255,0.07);
+    --text-primary:  #f1f5f9;
+    --text-secondary:#94a3b8;
+    --text-muted:    #475569;
+    --accent:        #fb923c;
+    --accent-hover:  #f97316;
+    --accent-soft:   rgba(251,146,60,0.14);
+    --shadow-card:   0 4px 24px rgba(0,0,0,0.4);
+    --shadow-modal:  0 24px 64px rgba(0,0,0,0.7);
+    --header-bg:     rgba(10,15,26,0.85);
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 10% -10%, rgba(249,115,22,0.13) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 90% 110%, rgba(249,115,22,0.09) 0%, transparent 55%);
+    pointer-events: none; z-index: 0;
+  }
+  body.dark::before {
+    background:
+      radial-gradient(ellipse 80% 60% at 10% -10%, rgba(251,146,60,0.1) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 90% 110%, rgba(251,146,60,0.07) 0%, transparent 55%);
+  }
+
+  /* ── Header ── */
+  #app-header {
+    background: var(--header-bg);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border-card);
+  }
+
+  /* ── Logo ── */
+  .logo-text {
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.6rem;
+    color: var(--accent); letter-spacing: -0.03em; line-height: 1;
+  }
+  body[dir="rtl"] .logo-text { font-family: 'Tajawal', sans-serif; }
+
+  .logo-tagline {
+    font-size: 0.7rem; color: var(--text-muted); font-weight: 500;
+    margin-top: 1px; letter-spacing: 0.01em;
+  }
+
+  /* ── Icon buttons ── */
+  .icon-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 38px; height: 38px; border-radius: 10px;
+    border: 1px solid var(--border-card);
+    background: var(--bg-glass); color: var(--text-secondary);
+    cursor: pointer; font-size: 0.85rem; font-weight: 600;
+    backdrop-filter: blur(8px); text-decoration: none;
+  }
+  .icon-btn:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+
+  /* ── Search ── */
+  .search-wrap input {
+    width: 100%; background: var(--bg-glass); backdrop-filter: blur(12px);
+    border: 1px solid var(--border-card); border-radius: 14px;
+    padding: 0.75rem 1rem 0.75rem 2.8rem;
+    font-size: 0.9rem; color: var(--text-primary); outline: none;
+  }
+  body[dir="rtl"] .search-wrap input { padding: 0.75rem 2.8rem 0.75rem 1rem; }
+  .search-wrap input::placeholder { color: var(--text-muted); }
+  .search-wrap input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .search-wrap .search-icon { position: absolute; top: 50%; transform: translateY(-50%); left: 1rem; color: var(--text-muted); }
+  body[dir="rtl"] .search-wrap .search-icon { left: auto; right: 1rem; }
+
+  /* ── Tabs ── */
+  .tabs-bar {
+    display: flex; gap: 6px;
+    background: var(--bg-glass); backdrop-filter: blur(12px);
+    border: 1px solid var(--border-card); border-radius: 14px; padding: 5px;
+  }
+  .tab-btn {
+    flex: 1; padding: 0.55rem 0.5rem; border-radius: 10px; border: none;
+    cursor: pointer; font-size: 0.8rem; font-weight: 600;
+    background: transparent; color: var(--text-secondary);
+    display: flex; align-items: center; justify-content: center; gap: 5px; white-space: nowrap;
+  }
+  .tab-btn:hover { background: var(--accent-soft); color: var(--accent); }
+  .tab-btn.active { background: var(--accent); color: #fff; box-shadow: 0 2px 12px rgba(249,115,22,0.35); }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--bg-card); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-card); border-radius: 18px; box-shadow: var(--shadow-card);
+    padding: 1.1rem 1.1rem 0.9rem; display: flex; flex-direction: column; gap: 0.55rem;
+  }
+  .card:hover { border-color: var(--accent); box-shadow: 0 6px 32px rgba(249,115,22,0.15); }
+
+  .card-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; color: var(--text-primary); line-height: 1.2; }
+  body[dir="rtl"] .card-name { font-family: 'Tajawal', sans-serif; }
+  .card-area  { font-size: 0.78rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+  .card-phone { font-size: 0.82rem; color: var(--text-secondary); direction: ltr; display: inline-block; }
+
+  .tag { display: inline-block; padding: 2px 9px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); font-size: 0.68rem; font-weight: 600; }
+
+  .card-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
+  .btn-action {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 0.38rem 0.75rem; border-radius: 9px;
+    border: 1px solid var(--border-card); font-size: 0.75rem; font-weight: 600;
+    cursor: pointer; background: var(--bg-glass); color: var(--text-secondary); text-decoration: none;
+  }
+  .btn-action:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+  .btn-call { color: #22c55e; border-color: rgba(34,197,94,0.3); }
+  .btn-call:hover { background: rgba(34,197,94,0.12); color: #22c55e; border-color: #22c55e; }
+  .btn-wa { color: #25D366; border-color: rgba(37,211,102,0.3); }
+  .btn-wa:hover { background: rgba(37,211,102,0.12); color: #25D366; border-color: #25D366; }
+  .btn-fav.active { color: #f59e0b; border-color: #f59e0b; background: rgba(245,158,11,0.12); }
+  .btn-fav.active:hover { background: rgba(245,158,11,0.2); }
+  .btn-delete:hover { background: rgba(239,68,68,0.12); color: #ef4444; border-color: #ef4444; }
+
+  .type-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 99px; font-size: 0.68rem; font-weight: 700; }
+  .type-shop    { background: rgba(59,130,246,0.12); color: #3b82f6; }
+  .type-service { background: rgba(168,85,247,0.12); color: #a855f7; }
+
+  /* ── FAB ── */
+  #fab {
+    position: fixed; bottom: 1.5rem; right: 1.5rem;
+    width: 54px; height: 54px; border-radius: 16px;
+    background: var(--accent); color: #fff; border: none; cursor: pointer;
+    font-size: 1.4rem; display: none; align-items: center; justify-content: center;
+    box-shadow: 0 6px 24px rgba(249,115,22,0.45); z-index: 50;
+  }
+  body[dir="rtl"] #fab { right: auto; left: 1.5rem; }
+  #fab:hover { background: var(--accent-hover); }
+
+  /* ── Modal ── */
+  #modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45); backdrop-filter: blur(6px);
+    z-index: 100; align-items: center; justify-content: center; padding: 1rem;
+  }
+  #modal-overlay.open { display: flex; }
+  #modal-box {
+    background: var(--bg-modal); border: 1px solid var(--border-card);
+    border-radius: 22px; box-shadow: var(--shadow-modal);
+    width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; padding: 1.5rem;
+  }
+  .modal-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem; color: var(--text-primary); }
+  body[dir="rtl"] .modal-title { font-family: 'Tajawal', sans-serif; }
+
+  .form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 0.9rem; }
+  .form-label { font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); }
+  .form-input {
+    background: var(--bg-base); border: 1px solid var(--border-card); border-radius: 10px;
+    padding: 0.65rem 0.9rem; font-size: 0.875rem; color: var(--text-primary); outline: none; width: 100%;
+  }
+  .form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .form-input::placeholder { color: var(--text-muted); }
+  select.form-input { cursor: pointer; }
+  .form-error { font-size: 0.72rem; color: #ef4444; display: none; margin-top: 2px; }
+  .form-error.show { display: block; }
+  #form-error-banner {
+    background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 10px; padding: 0.65rem 0.9rem; font-size: 0.8rem; color: #ef4444;
+    display: none; margin-bottom: 0.9rem;
+  }
+  #form-error-banner.show { display: block; }
+
+  .btn-primary {
+    background: var(--accent); color: #fff; border: none; border-radius: 11px;
+    padding: 0.7rem 1.4rem; font-size: 0.875rem; font-weight: 700; cursor: pointer; width: 100%;
+  }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-secondary {
+    background: var(--bg-glass); color: var(--text-secondary); border: 1px solid var(--border-card);
+    border-radius: 11px; padding: 0.7rem 1.4rem; font-size: 0.875rem; font-weight: 600; cursor: pointer; width: 100%;
+  }
+  .btn-secondary:hover { background: var(--accent-soft); color: var(--accent); }
+
+  /* ── Empty state ── */
+  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3.5rem 1rem; color: var(--text-muted); text-align: center; gap: 0.75rem; }
+  .empty-state i { font-size: 2.5rem; opacity: 0.35; }
+  .empty-state p { font-size: 0.9rem; font-weight: 500; }
+
+  /* ── Grid ── */
+  .cards-grid { display: grid; grid-template-columns: 1fr; gap: 0.85rem; }
+  @media (min-width: 640px)  { .cards-grid { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 1024px) { .cards-grid { grid-template-columns: 1fr 1fr 1fr; } }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-card); border-radius: 99px; }
+
+  .section-count { font-size: 0.78rem; color: var(--text-muted); font-weight: 500; }
+
+  /* ── Admin badge ── */
+  .admin-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 99px;
+    background: rgba(249,115,22,0.15); border: 1px solid rgba(249,115,22,0.35);
+    color: var(--accent); font-size: 0.68rem; font-weight: 700;
+  }
+
+  /* ── Spinner ── */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    width: 32px; height: 32px; border: 3px solid var(--border-card);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  /* ── Loading screen ── */
+  #loading-screen {
+    position: fixed; inset: 0; background: var(--bg-base);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 300; flex-direction: column; gap: 1rem;
+  }
+
+  /* ── PIN overlay ── */
+  #pin-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55); backdrop-filter: blur(8px);
+    z-index: 200; align-items: center; justify-content: center; padding: 1rem;
+  }
+  #pin-overlay.open { display: flex; }
+  #pin-box {
+    background: var(--bg-modal); border: 1px solid var(--border-card);
+    border-radius: 22px; box-shadow: var(--shadow-modal);
+    width: 100%; max-width: 360px; padding: 2rem 1.5rem; text-align: center;
+  }
+  .pin-icon {
+    width: 52px; height: 52px; border-radius: 14px;
+    background: var(--accent-soft); border: 1px solid rgba(249,115,22,0.25);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1rem; font-size: 1.3rem; color: var(--accent);
+  }
+  #pin-input {
+    background: var(--bg-base); border: 1px solid var(--border-card); border-radius: 12px;
+    padding: 0.75rem 1rem; font-size: 1.1rem; color: var(--text-primary);
+    outline: none; width: 100%; text-align: center; letter-spacing: 0.3em;
+    margin: 1rem 0 0.4rem;
+  }
+  #pin-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  #pin-error { font-size: 0.78rem; color: #ef4444; min-height: 1.2rem; margin-bottom: 0.65rem; }
+</style>
+</head>
+
+<body class="relative">
+
+<!-- ════ LOADING SCREEN ════ -->
+<div id="loading-screen">
+  <div class="spinner"></div>
+  <p style="font-size:0.85rem;color:var(--text-muted);font-weight:500;">Connecting…</p>
+</div>
+
+<!-- ════ PIN MODAL ════ -->
+<div id="pin-overlay">
+  <div id="pin-box">
+    <div class="pin-icon"><i class="fa-solid fa-lock"></i></div>
+    <h2 id="pin-title" style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;color:var(--text-primary);margin-bottom:0.3rem;">Admin Access</h2>
+    <p id="pin-sub" style="font-size:0.8rem;color:var(--text-muted);">Enter PIN for admin controls, or skip to browse.</p>
+    <input type="password" id="pin-input" maxlength="12" placeholder="••••••••" autocomplete="off" />
+    <p id="pin-error"></p>
+    <div style="display:flex;gap:10px;">
+      <button class="btn-secondary" style="font-size:0.82rem;" onclick="skipPin()" id="btn-pin-skip">Skip (View Only)</button>
+      <button class="btn-primary"   style="font-size:0.82rem;" onclick="submitPin()" id="btn-pin-enter">Enter</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ HEADER ════ -->
+<header id="app-header" class="sticky top-0 z-40 px-4 py-3">
+  <div class="max-w-5xl mx-auto flex items-center justify-between gap-3">
+
+    <!-- Logo -->
+    <div class="flex items-center gap-2.5">
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:var(--accent);">
+        <i class="fa-solid fa-car text-white text-sm"></i>
+      </div>
+      <div>
+        <div class="logo-text">Carat</div>
+        <div class="logo-tagline" id="tagline">Search from where you are</div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="flex items-center gap-2 flex-wrap justify-end">
+      <!-- Admin badge -->
+      <span class="admin-badge" id="admin-badge" style="display:none;">
+        <i class="fa-solid fa-crown" style="font-size:0.62rem;"></i>
+        <span id="admin-badge-text">Admin</span>
+      </span>
+
+      <!-- Delivery button -->
+      <a class="icon-btn" id="delivery-btn"
+         href="https://wa.me/201553885076?text=%D8%B9%D8%A7%D9%8A%D8%B2%20%D8%AF%D9%84%D9%8A%D9%81%D8%B1%D9%8A"
+         target="_blank" rel="noopener" title="Delivery" style="font-size:1.1rem;">
+        🏍️
+      </a>
+
+      <!-- Language toggle -->
+      <button class="icon-btn" onclick="toggleLang()">
+        <span id="lang-label" style="font-size:0.75rem;font-weight:700;">AR</span>
+      </button>
+
+      <!-- Theme toggle -->
+      <button class="icon-btn" onclick="toggleTheme()">
+        <i id="theme-icon" class="fa-solid fa-moon" style="font-size:0.85rem;"></i>
+      </button>
+    </div>
+
+  </div>
+</header>
+
+<!-- ════ MAIN ════ -->
+<main class="relative z-10 max-w-5xl mx-auto px-4 pt-5 pb-24">
+
+  <!-- Search -->
+  <div class="search-wrap relative mb-4">
+    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+    <input type="text" id="search-input" placeholder="Search by name, area or tag…"
+      oninput="onSearch(this.value)" autocomplete="off" />
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs-bar mb-5">
+    <button class="tab-btn active" id="tab-favorites" onclick="switchTab('favorites')">
+      <i class="fa-solid fa-star"></i>
+      <span data-i18n="tab_favorites">Favorites</span>
+    </button>
+    <button class="tab-btn" id="tab-shops" onclick="switchTab('shops')">
+      <i class="fa-solid fa-store"></i>
+      <span data-i18n="tab_shops">Shops</span>
+    </button>
+    <button class="tab-btn" id="tab-services" onclick="switchTab('services')">
+      <i class="fa-solid fa-wrench"></i>
+      <span data-i18n="tab_services">Services</span>
+    </button>
+  </div>
+
+  <!-- Count -->
+  <div class="flex items-center justify-between mb-3 px-0.5">
+    <p class="section-count" id="result-count"></p>
+  </div>
+
+  <!-- Content -->
+  <div id="content-area">
+    <div class="empty-state"><div class="spinner"></div></div>
+  </div>
+
+</main>
+
+<!-- ════ FAB (admin only) ════ -->
+<button id="fab" onclick="openModal()" title="Add new">
+  <i class="fa-solid fa-plus"></i>
+</button>
+
+<!-- ════ ADD / EDIT MODAL ════ -->
+<div id="modal-overlay" onclick="handleOverlayClick(event)">
+  <div id="modal-box">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="modal-title" id="modal-title">Add New</h2>
+      <button onclick="closeModal()" class="icon-btn" style="width:32px;height:32px;border-radius:8px;">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div id="form-error-banner"></div>
+
+    <div class="form-group">
+      <label class="form-label" data-i18n="field_name">Name <span style="color:var(--accent)">*</span></label>
+      <input class="form-input" type="text" id="f-name" data-i18n-placeholder="ph_name" placeholder="e.g. Al-Nour Auto Parts" />
+      <span class="form-error" id="err-name" data-i18n="err_required">This field is required.</span>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" data-i18n="field_area">Area <span style="color:var(--accent)">*</span></label>
+      <input class="form-input" type="text" id="f-area" data-i18n-placeholder="ph_area" placeholder="e.g. Smouha, Alexandria" />
+      <span class="form-error" id="err-area" data-i18n="err_required">This field is required.</span>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" data-i18n="field_address">Full Address</label>
+      <input class="form-input" type="text" id="f-address" data-i18n-placeholder="ph_address" placeholder="Street, building…" />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" data-i18n="field_phone">Phone <span style="color:var(--accent)">*</span></label>
+      <input class="form-input" type="tel" id="f-phone" placeholder="e.g. 01012345678" dir="ltr" />
+      <span class="form-error" id="err-phone" data-i18n="err_required">This field is required.</span>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" data-i18n="field_tags">Tags <span style="font-weight:400;color:var(--text-muted)">(comma separated)</span></label>
+      <input class="form-input" type="text" id="f-tags" data-i18n-placeholder="ph_tags" placeholder="e.g. brakes, BMW, oil" />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" data-i18n="field_type">Type <span style="color:var(--accent)">*</span></label>
+      <select class="form-input" id="f-type">
+        <option value=""        data-i18n="select_type">-- Select type --</option>
+        <option value="shop"    data-i18n="type_shop">Spare Parts Shop</option>
+        <option value="service" data-i18n="type_service">Service Center</option>
+      </select>
+      <span class="form-error" id="err-type" data-i18n="err_required">This field is required.</span>
+    </div>
+
+    <div class="flex gap-3 mt-2">
+      <button class="btn-secondary" onclick="closeModal()" data-i18n="btn_cancel">Cancel</button>
+      <button class="btn-primary"   onclick="submitForm()" id="btn-save" data-i18n="btn_save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════ -->
+<script>
+/* ──────────────────────────────────────
+   SUPABASE INIT
+   ⚠️  Replace with your actual project URL and anon key
+       from: https://app.supabase.com → Project Settings → API
+────────────────────────────────────── */
+const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
+const SUPABASE_KEY = 'YOUR_ANON_PUBLIC_KEY';
+const _supabase    = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* ──────────────────────────────────────
+   TRANSLATIONS
+────────────────────────────────────── */
+const i18n = {
+  en: {
+    tagline:         "Search from where you are",
+    tab_favorites:   "Favorites",
+    tab_shops:       "Shops",
+    tab_services:    "Services",
+    search_ph:       "Search by name, area or tag…",
+    modal_add:       "Add New",
+    modal_edit:      "Edit",
+    field_name:      "Name",
+    field_area:      "Area",
+    field_address:   "Full Address",
+    field_phone:     "Phone",
+    field_tags:      "Tags",
+    field_type:      "Type",
+    ph_name:         "e.g. Al-Nour Auto Parts",
+    ph_area:         "e.g. Smouha, Alexandria",
+    ph_address:      "Street, building…",
+    ph_tags:         "e.g. brakes, BMW, oil",
+    select_type:     "-- Select type --",
+    type_shop:       "Spare Parts Shop",
+    type_service:    "Service Center",
+    btn_save:        "Save",
+    btn_cancel:      "Cancel",
+    btn_call:        "Call",
+    btn_wa:          "WhatsApp",
+    err_required:    "This field is required.",
+    err_fill:        "Please fill in all required fields.",
+    err_server:      "Server error. Please try again.",
+    empty_favorites: "No favorites yet. Tap ⭐ on any card.",
+    empty_shops:     "No shops found.",
+    empty_services:  "No service centers found.",
+    badge_shop:      "Shop",
+    badge_service:   "Service Center",
+    count_result:    (n) => `${n} result${n !== 1 ? 's' : ''}`,
+    lang_toggle:     "AR",
+    admin_badge:     "Admin",
+    pin_title:       "Admin Access",
+    pin_sub:         "Enter PIN for admin controls, or skip to browse.",
+    pin_wrong:       "Incorrect PIN. Try again.",
+    btn_pin_skip:    "Skip (View Only)",
+    btn_pin_enter:   "Enter",
+    saving:          "Saving…",
+  },
+  ar: {
+    tagline:         "دور وانت في مكانك",
+    tab_favorites:   "المفضلة",
+    tab_shops:       "المحلات",
+    tab_services:    "مراكز الخدمة",
+    search_ph:       "ابحث بالاسم أو المنطقة أو الوسم…",
+    modal_add:       "إضافة جديد",
+    modal_edit:      "تعديل",
+    field_name:      "الاسم",
+    field_area:      "المنطقة",
+    field_address:   "العنوان الكامل",
+    field_phone:     "رقم الهاتف",
+    field_tags:      "الوسوم",
+    field_type:      "النوع",
+    ph_name:         "مثال: محلات النور لقطع الغيار",
+    ph_area:         "مثال: سموحة، الإسكندرية",
+    ph_address:      "الشارع والمبنى…",
+    ph_tags:         "مثال: فرامل، BMW، زيت",
+    select_type:     "-- اختر النوع --",
+    type_shop:       "محل قطع غيار",
+    type_service:    "مركز خدمة",
+    btn_save:        "حفظ",
+    btn_cancel:      "إلغاء",
+    btn_call:        "اتصال",
+    btn_wa:          "واتساب",
+    err_required:    "هذا الحقل مطلوب.",
+    err_fill:        "يرجى ملء جميع الحقول المطلوبة.",
+    err_server:      "خطأ في الخادم. حاول مرة أخرى.",
+    empty_favorites: "لا توجد مفضلة بعد. اضغط ⭐ على أي بطاقة.",
+    empty_shops:     "لم يتم العثور على محلات.",
+    empty_services:  "لم يتم العثور على مراكز خدمة.",
+    badge_shop:      "محل",
+    badge_service:   "مركز خدمة",
+    count_result:    (n) => `${n} نتيجة`,
+    lang_toggle:     "EN",
+    admin_badge:     "أدمن",
+    pin_title:       "دخول المشرف",
+    pin_sub:         "أدخل الرقم السري للوصول إلى صلاحيات المشرف، أو تخطَّ للتصفح.",
+    pin_wrong:       "الرقم السري غير صحيح. حاول مرة أخرى.",
+    btn_pin_skip:    "تخطي (عرض فقط)",
+    btn_pin_enter:   "دخول",
+    saving:          "جارٍ الحفظ…",
+  }
+};
+
+/* ──────────────────────────────────────
+   STATE
+────────────────────────────────────── */
+const ADMIN_PIN  = '25022023';
+let currentLang  = localStorage.getItem('carat_lang')   || 'en';
+let currentTheme = localStorage.getItem('carat_theme')  || 'light';
+let currentTab   = localStorage.getItem('carat_tab')    || 'favorites';
+let searchQuery  = localStorage.getItem('carat_search') || '';
+let isAdmin      = false;
+let editingId    = null;
+let allShops     = [];   // populated by Supabase fetch + realtime
+
+/* ──────────────────────────────────────
+   HELPERS
+────────────────────────────────────── */
+function t(key)        { return i18n[currentLang][key] || key; }
+function getFavs()     { return JSON.parse(localStorage.getItem('carat_favs') || '[]'); }
+function saveFavs(arr) { localStorage.setItem('carat_favs', JSON.stringify(arr)); }
+function cleanPhone(p) { return (p || '').replace(/\D/g, ''); }
+function esc(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+// Normalise tags: Supabase stores as text, split on commas
+function parseTags(tags) {
+  if (!tags) return [];
+  if (Array.isArray(tags)) return tags;
+  return tags.split(',').map(s => s.trim()).filter(Boolean);
+}
+
+/* ──────────────────────────────────────
+   THEME
+────────────────────────────────────── */
+function applyTheme() {
+  const dark = currentTheme === 'dark';
+  document.body.classList.toggle('dark', dark);
+  document.getElementById('theme-icon').className = dark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+}
+function toggleTheme() {
+  currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('carat_theme', currentTheme);
+  applyTheme();
+}
+
+/* ──────────────────────────────────────
+   LANGUAGE
+────────────────────────────────────── */
+function applyLang() {
+  const isAr = currentLang === 'ar';
+  document.documentElement.lang = currentLang;
+  document.documentElement.dir  = isAr ? 'rtl' : 'ltr';
+  document.body.dir = isAr ? 'rtl' : 'ltr';
+
+  document.getElementById('tagline').textContent          = t('tagline');
+  document.getElementById('lang-label').textContent       = t('lang_toggle');
+  document.getElementById('admin-badge-text').textContent = t('admin_badge');
+  document.getElementById('pin-title').textContent        = t('pin_title');
+  document.getElementById('pin-sub').textContent          = t('pin_sub');
+  document.getElementById('btn-pin-skip').textContent     = t('btn_pin_skip');
+  document.getElementById('btn-pin-enter').textContent    = t('btn_pin_enter');
+
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.getAttribute('data-i18n');
+    if (i18n[currentLang][k] !== undefined) el.textContent = t(k);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const k = el.getAttribute('data-i18n-placeholder');
+    if (i18n[currentLang][k]) el.placeholder = t(k);
+  });
+  document.getElementById('search-input').placeholder = t('search_ph');
+  document.querySelectorAll('select option[data-i18n]').forEach(el => {
+    el.textContent = t(el.getAttribute('data-i18n'));
+  });
+}
+function toggleLang() {
+  currentLang = currentLang === 'en' ? 'ar' : 'en';
+  localStorage.setItem('carat_lang', currentLang);
+  applyLang();
+  render();
+}
+
+/* ──────────────────────────────────────
+   PIN / ADMIN
+────────────────────────────────────── */
+function showPinModal() {
+  document.getElementById('pin-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('pin-input').focus(), 150);
+}
+function hidePinModal() {
+  document.getElementById('pin-overlay').classList.remove('open');
+}
+function submitPin() {
+  const val = document.getElementById('pin-input').value.trim();
+  if (val === ADMIN_PIN) {
+    isAdmin = true;
+    document.getElementById('pin-error').textContent = '';
+    hidePinModal();
+    applyRoleUI();
+    render();
+  } else {
+    document.getElementById('pin-error').textContent = t('pin_wrong');
+    document.getElementById('pin-input').value = '';
+    document.getElementById('pin-input').focus();
+  }
+}
+function skipPin() {
+  isAdmin = false;
+  hidePinModal();
+  applyRoleUI();
+  render();
+}
+function applyRoleUI() {
+  document.getElementById('fab').style.display         = isAdmin ? 'flex'        : 'none';
+  document.getElementById('admin-badge').style.display = isAdmin ? 'inline-flex' : 'none';
+}
+
+/* ──────────────────────────────────────
+   TABS
+────────────────────────────────────── */
+function switchTab(tab) {
+  currentTab = tab;
+  localStorage.setItem('carat_tab', tab);
+  ['favorites', 'shops', 'services'].forEach(k =>
+    document.getElementById('tab-' + k).classList.toggle('active', k === tab)
+  );
+  render();
+}
+
+/* ──────────────────────────────────────
+   SEARCH
+────────────────────────────────────── */
+function onSearch(val) {
+  searchQuery = val;
+  localStorage.setItem('carat_search', val);
+  render();
+}
+
+/* ──────────────────────────────────────
+   RENDER
+────────────────────────────────────── */
+function render() {
+  const favs = getFavs();
+  const q    = searchQuery.toLowerCase().trim();
+  let items  = [];
+
+  if (currentTab === 'favorites') {
+    items = allShops.filter(d => favs.includes(d.id));
+  } else if (currentTab === 'shops') {
+    items = allShops.filter(d => d.type === 'shop');
+  } else {
+    items = allShops.filter(d => d.type === 'service');
+  }
+
+  if (q) {
+    items = items.filter(d => {
+      const name = (d.name || '').toLowerCase();
+      const area = (d.area || '').toLowerCase();
+      const tags = parseTags(d.tags).join(' ').toLowerCase();
+      return name.includes(q) || area.includes(q) || tags.includes(q);
+    });
+  }
+
+  document.getElementById('result-count').textContent = t('count_result')(items.length);
+  const container = document.getElementById('content-area');
+
+  if (items.length === 0) {
+    const icon = currentTab === 'favorites' ? 'star' : currentTab === 'shops' ? 'store' : 'wrench';
+    container.innerHTML = `
+      <div class="empty-state">
+        <i class="fa-solid fa-${icon}"></i>
+        <p>${t('empty_' + currentTab)}</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = `<div class="cards-grid">${items.map(d => cardHTML(d, favs)).join('')}</div>`;
+}
+
+/* ──────────────────────────────────────
+   CARD HTML
+────────────────────────────────────── */
+function cardHTML(d, favs) {
+  const isFav      = favs.includes(d.id);
+  const tagsArr    = parseTags(d.tags);
+  const tagsHTML   = tagsArr.map(tag => `<span class="tag">${esc(tag)}</span>`).join('');
+  const badgeClass = d.type === 'shop' ? 'type-shop' : 'type-service';
+  const badgeIcon  = d.type === 'shop' ? 'store' : 'wrench';
+  const badgeText  = d.type === 'shop' ? t('badge_shop') : t('badge_service');
+
+  const adminBtns = isAdmin ? `
+    <button class="btn-action" onclick="openEdit('${d.id}')">
+      <i class="fa-solid fa-pen-to-square"></i>
+    </button>
+    <button class="btn-action btn-delete" onclick="deleteItem('${d.id}')">
+      <i class="fa-solid fa-trash"></i>
+    </button>` : '';
+
+  return `
+  <div class="card" id="card-${d.id}">
+    <div class="flex items-start justify-between gap-2">
+      <div>
+        <div class="card-name">${esc(d.name)}</div>
+        <div class="card-area">
+          <i class="fa-solid fa-location-dot" style="font-size:0.7rem;color:var(--accent)"></i>
+          ${esc(d.area)}
+        </div>
+      </div>
+      <span class="type-badge ${badgeClass} shrink-0">
+        <i class="fa-solid fa-${badgeIcon}"></i>${badgeText}
+      </span>
+    </div>
+    ${d.address ? `<div style="font-size:0.76rem;color:var(--text-muted);">
+      <i class="fa-solid fa-map-pin" style="font-size:0.68rem;margin-inline-end:4px;"></i>${esc(d.address)}
+    </div>` : ''}
+    <div class="card-phone">
+      <i class="fa-solid fa-phone" style="font-size:0.7rem;margin-inline-end:5px;color:var(--accent)"></i>
+      ${esc(d.phone)}
+    </div>
+    ${tagsHTML ? `<div class="flex flex-wrap gap-1.5">${tagsHTML}</div>` : ''}
+    <div class="card-actions">
+      <a class="btn-action btn-call" href="tel:${esc(d.phone)}">
+        <i class="fa-solid fa-phone"></i>${t('btn_call')}
+      </a>
+      <a class="btn-action btn-wa" href="https://wa.me/${cleanPhone(d.phone)}" target="_blank" rel="noopener">
+        <i class="fa-brands fa-whatsapp"></i>${t('btn_wa')}
+      </a>
+      <button class="btn-action btn-fav ${isFav ? 'active' : ''}" onclick="toggleFav('${d.id}')">
+        <i class="fa-${isFav ? 'solid' : 'regular'} fa-star"></i>
+      </button>
+      ${adminBtns}
+    </div>
+  </div>`;
+}
+
+/* ──────────────────────────────────────
+   FAVORITES  (localStorage only)
+────────────────────────────────────── */
+function toggleFav(id) {
+  const favs = getFavs();
+  const idx  = favs.indexOf(id);
+  if (idx === -1) favs.push(id); else favs.splice(idx, 1);
+  saveFavs(favs);
+  render();
+}
+
+/* ──────────────────────────────────────
+   SUPABASE — FETCH ALL SHOPS
+────────────────────────────────────── */
+async function fetchShops() {
+  const { data, error } = await _supabase
+    .from('shops')
+    .select('*')
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error('Fetch error:', error);
+    document.getElementById('content-area').innerHTML = `
+      <div class="empty-state">
+        <i class="fa-solid fa-triangle-exclamation" style="color:#ef4444;opacity:1;"></i>
+        <p style="color:#ef4444;">Connection error: ${esc(error.message)}</p>
+      </div>`;
+    return;
+  }
+
+  allShops = data || [];
+  render();
+}
+
+/* ──────────────────────────────────────
+   SUPABASE — REAL-TIME SUBSCRIPTION
+────────────────────────────────────── */
+function startRealtimeListener() {
+  _supabase
+    .channel('shops-changes')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'shops' },
+      (payload) => {
+        const { eventType, new: newRow, old: oldRow } = payload;
+
+        if (eventType === 'INSERT') {
+          // Avoid duplicate if already fetched
+          if (!allShops.find(s => s.id === newRow.id)) {
+            allShops.push(newRow);
+          }
+        } else if (eventType === 'UPDATE') {
+          const idx = allShops.findIndex(s => s.id === newRow.id);
+          if (idx !== -1) allShops[idx] = newRow;
+          else allShops.push(newRow);
+        } else if (eventType === 'DELETE') {
+          allShops = allShops.filter(s => s.id !== oldRow.id);
+          saveFavs(getFavs().filter(f => f !== oldRow.id));
+        }
+
+        render();
+      }
+    )
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        console.info('Realtime: connected to shops channel');
+      }
+    });
+}
+
+/* ──────────────────────────────────────
+   DELETE  (Supabase)
+────────────────────────────────────── */
+async function deleteItem(id) {
+  if (!isAdmin) return;
+  const { error } = await _supabase.from('shops').delete().eq('id', id);
+  if (error) {
+    console.error('Delete error:', error);
+  }
+  // Realtime listener handles UI update
+}
+
+/* ──────────────────────────────────────
+   MODAL
+────────────────────────────────────── */
+function openModal(edit = false) {
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('modal-title').textContent = edit ? t('modal_edit') : t('modal_add');
+  document.getElementById('form-error-banner').classList.remove('show');
+  clearErrors();
+}
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  resetForm();
+  editingId = null;
+}
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+}
+function resetForm() {
+  ['f-name', 'f-area', 'f-address', 'f-phone', 'f-tags'].forEach(id =>
+    (document.getElementById(id).value = '')
+  );
+  document.getElementById('f-type').value = '';
+  clearErrors();
+  document.getElementById('form-error-banner').classList.remove('show');
+}
+function clearErrors() {
+  ['err-name', 'err-area', 'err-phone', 'err-type'].forEach(id =>
+    document.getElementById(id).classList.remove('show')
+  );
+}
+
+/* ──────────────────────────────────────
+   OPEN EDIT
+────────────────────────────────────── */
+function openEdit(id) {
+  if (!isAdmin) return;
+  const item = allShops.find(d => d.id === id);
+  if (!item) return;
+  editingId = id;
+
+  document.getElementById('f-name').value    = item.name    || '';
+  document.getElementById('f-area').value    = item.area    || '';
+  document.getElementById('f-address').value = item.address || '';
+  document.getElementById('f-phone').value   = item.phone   || '';
+  document.getElementById('f-type').value    = item.type    || '';
+  document.getElementById('f-tags').value    = parseTags(item.tags).join(', ');
+
+  openModal(true);
+}
+
+/* ──────────────────────────────────────
+   SUBMIT  (Supabase insert / update)
+────────────────────────────────────── */
+async function submitForm() {
+  if (!isAdmin) return;
+
+  clearErrors();
+  document.getElementById('form-error-banner').classList.remove('show');
+
+  const name  = document.getElementById('f-name').value.trim();
+  const area  = document.getElementById('f-area').value.trim();
+  const phone = document.getElementById('f-phone').value.trim();
+  const type  = document.getElementById('f-type').value;
+
+  let valid = true;
+  if (!name)  { document.getElementById('err-name').classList.add('show');  valid = false; }
+  if (!area)  { document.getElementById('err-area').classList.add('show');  valid = false; }
+  if (!phone) { document.getElementById('err-phone').classList.add('show'); valid = false; }
+  if (!type)  { document.getElementById('err-type').classList.add('show');  valid = false; }
+  if (!valid) {
+    const b = document.getElementById('form-error-banner');
+    b.textContent = t('err_fill');
+    b.classList.add('show');
+    return;
+  }
+
+  const address = document.getElementById('f-address').value.trim();
+  const tagsRaw = document.getElementById('f-tags').value.trim();
+  // Store tags as comma-separated text (compatible with text column in Supabase)
+  const tags    = tagsRaw
+    ? tagsRaw.split(',').map(s => s.trim()).filter(Boolean).join(', ')
+    : '';
+
+  const saveBtn = document.getElementById('btn-save');
+  const origTxt = saveBtn.textContent;
+  saveBtn.textContent = t('saving');
+  saveBtn.disabled    = true;
+
+  try {
+    if (editingId) {
+      /* ── UPDATE ── */
+      const { error } = await _supabase
+        .from('shops')
+        .update({ name, area, address, phone, tags, type })
+        .eq('id', editingId);
+
+      if (error) throw error;
+    } else {
+      /* ── INSERT ── */
+      const { error } = await _supabase
+        .from('shops')
+        .insert([{ name, area, address, phone, tags, type }]);
+
+      if (error) throw error;
+
+      // Switch to the matching tab after adding
+      switchTab(type === 'shop' ? 'shops' : 'services');
+    }
+
+    closeModal();
+  } catch (e) {
+    console.error('Save error:', e);
+    const b = document.getElementById('form-error-banner');
+    b.textContent = t('err_server') + ' ' + (e.message || '');
+    b.classList.add('show');
+  } finally {
+    saveBtn.textContent = origTxt;
+    saveBtn.disabled    = false;
+    editingId = null;
+  }
+}
+
+/* ──────────────────────────────────────
+   PIN KEYBOARD SHORTCUT
+────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('pin-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitPin();
+  });
+});
+
+/* ──────────────────────────────────────
+   INIT
+────────────────────────────────────── */
+async function init() {
+  // Apply saved preferences
+  applyTheme();
+  applyLang();
+
+  // Restore search field
+  document.getElementById('search-input').value = searchQuery;
+
+  // Restore tab highlight
+  ['favorites', 'shops', 'services'].forEach(k =>
+    document.getElementById('tab-' + k).classList.toggle('active', k === currentTab)
+  );
+
+  // Default role UI (not admin yet)
+  applyRoleUI();
+
+  // Fetch data from Supabase, then hide loading screen
+  await fetchShops();
+  document.getElementById('loading-screen').style.display = 'none';
+
+  // Start Supabase real-time listener (all users benefit)
+  startRealtimeListener();
+
+  // Show PIN modal
+  showPinModal();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>

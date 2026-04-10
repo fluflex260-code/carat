@@ -20,6 +20,37 @@
 <script>
   const SUPABASE_URL = "https://yrkctohprrbjwokjqghi.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_8r7fviSAG6ca6pye2Ji48Q_Qv2jEqWB";
+  async function addShop() {
+  console.log("clicked");
+
+  const name = document.querySelector('#name').value;
+  const area = document.querySelector('#area').value;
+  const address = document.querySelector('#address').value;
+  const phone = document.querySelector('#phone').value;
+  const tags = document.querySelector('#tags').value;
+  const type = document.querySelector('#type').value;
+
+  const { data, error } = await supabase
+    .from('shops')
+    .insert([
+      {
+        name: name,
+        area: area,
+        address: address,
+        phone: phone,
+        tags: tags,
+        type: type
+      }
+    ]);
+
+  if (error) {
+    alert("Error: " + error.message);
+    console.log(error);
+  } else {
+    alert("Saved successfully ✅");
+    console.log(data);
+  }
+}
 
 const supabase = window.supabase.createClient(
   SUPABASE_URL,
